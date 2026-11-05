@@ -35,13 +35,15 @@ struct LiquidDisc: View, Animatable {
             for layer in 0..<2 {
                 var path = Path()
                 let phase = time * speed * (layer == 0 ? 1 : -1.3) + Double(layer) * 1.7
+                func wave(_ x: Double) -> Double { surface + amplitude * sin(x / w * 2 * .pi * 1.6 + phase) }
                 path.move(to: CGPoint(x: 0, y: h))
                 var x = 0.0
-                while x <= w {
-                    let y = surface + amplitude * sin(x / w * 2 * .pi * 1.6 + phase)
-                    path.addLine(to: CGPoint(x: x, y: y))
+                while x < w {
+                    path.addLine(to: CGPoint(x: x, y: wave(x)))
                     x += 3
                 }
+                // 宽度不是 3 的倍数时，上面停在右边缘之前，要补上最右边一点，不然圆的右边会缺一条。
+                path.addLine(to: CGPoint(x: w, y: wave(w)))
                 path.addLine(to: CGPoint(x: w, y: h))
                 path.closeSubpath()
                 gc.fill(path, with: .color(tint.opacity(layer == 0 ? 0.62 : 0.32)))
