@@ -33,12 +33,7 @@ struct RootView: View {
         ZStack {
             WindowBackdrop(look: model.settings.look, transparency: model.settings.transparency)
             if model.showGuide {
-                // 引导的内容短，上下居中，不留一大片空白。
-                VStack(spacing: 0) {
-                    Spacer(minLength: 0)
-                    GuideView(model: model)
-                    Spacer(minLength: 0)
-                }
+                GuideView(model: model)
             } else if page == .settings {
                 SettingsView(model: model) { switchPage(.main) }
                     .transition(.opacity)
@@ -47,6 +42,9 @@ struct RootView: View {
                     .transition(.opacity)
             }
         }
+        // 卡片按质感画底：纯色、磨砂、玻璃（macOS 26 起是系统的玻璃）。
+        .environment(\.windowLook, model.settings.look)
+        .environment(\.isPreview, model.preview)
     }
 
     /// 主页和设置之间淡入淡出，不硬切。
@@ -83,6 +81,25 @@ struct RootView: View {
             if let error = model.scheduleError {
                 MessageLine(message: AppModel.Message(tone: .error, text: error.message))
             }
+            // 这台的上限谁都管不了时直说，不能装作在护电池。
+            if model.limitUnenforceable {
+                MessageLine(message: AppModel.Message(tone: .error, text: T("这台 Mac 的充电上限现在没人能管：系统不让改，放电帮手也碰不了这一代固件。电池会照常充满。")))
+            } else if model.limitNeedsHelper {
+                MessageLine(message: AppModel.Message(tone: .error, text: T("这台 Mac 的系统不能设充电上限，现在电池会照常充满。装上放电帮手后，由它来停充。")),
+                            action: model.helperInstallable ? (title: T("安装放电帮手"), run: { model.installHelper() }) : nil)
+                    .disabled(model.helperBusy)
+            }
+            // 不在「应用程序」里跑的时候，登录时打开和装完新版本后自己重新打开都用不了。
+            if model.offerMove {
+                MessageLine(message: AppModel.Message(tone: .info, text: T("现在不是从「应用程序」里打开的。放进去以后，登录时才会自己打开。")),
+                            action: (title: T("放进“应用程序”"), run: { model.moveToApplications() }))
+                    .disabled(model.moving)
+            }
+            // 读数里要你留意的：充电器跟不上、充得慢、高于上限只停充。条件没了自己消失。
+            ForEach(model.notices) { notice in
+                MessageLine(message: AppModel.Message(tone: notice.tone == .warn ? .error : .info, text: notice.text),
+                            symbol: notice.symbol)
+            }
             UpdateBanner(model: model)
             tonightCard
                 .animation(Motion.standard, value: model.tonight)
@@ -102,21 +119,32 @@ struct RootView: View {
         .frame(maxHeight: fillsHeight ? .infinity : nil, alignment: .top)
     }
 
+    private static let discSize: CGFloat = 96
+
     private var header: some View {
         HStack(alignment: .top, spacing: 16) {
             ZStack {
-                LiquidDisc(level: Double(model.battery.percent ?? 0) / 100, limit: model.decision.limit,
+                LiquidDisc(level: level, limit: model.decision.limit,
                            tint: ringColor, flow: model.displayFlow, live: model.liveMotion)
-                    .frame(width: 96, height: 96)
+                    .frame(width: Self.discSize, height: Self.discSize)
                     .animation(.easeInOut(duration: 0.8), value: model.battery.percent)
                     .clipShape(Circle())
                     .overlay(Circle().stroke(Color.primary.opacity(0.12), lineWidth: 1))
-                Text(percentText)
-                    .font(.system(size: 26, weight: .semibold, design: .rounded))
-                    .monospacedDigit()
-                    .numericTextTransition()
-                    .shadow(color: .black.opacity(0.25), radius: 2)
+                // 数字一半在水里一半在水外时，水里那半是白的，水外那半是正文色，两边都看得清。
+                percentLabel
+                    .foregroundStyle(.primary)
+                percentLabel
+                    .foregroundStyle(.white)
+                    .shadow(color: .black.opacity(0.18), radius: 1, y: 0.5)
+                    .mask {
+                        VStack(spacing: 0) {
+                            Spacer(minLength: 0)
+                            Rectangle().frame(height: Self.discSize * level)
+                        }
+                    }
+                    .animation(.easeInOut(duration: 0.8), value: model.battery.percent)
             }
+            .frame(width: Self.discSize, height: Self.discSize)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(diskLabel)
             VStack(alignment: .leading, spacing: 4) {
@@ -131,6 +159,8 @@ struct RootView: View {
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
+                statRow
+                    .padding(.top, 4)
             }
             Spacer(minLength: 0)
             Button {
@@ -148,12 +178,45 @@ struct RootView: View {
         .padding(.bottom, 14)
     }
 
-    /// 今晚的计划放在最上面：这是人最想知道的一句话，不用在别处找。
+    private var level: Double { Double(model.battery.percent ?? 0) / 100 }
+
+    private var percentLabel: some View {
+        Text(percentText)
+            .font(.system(size: 26, weight: .semibold, design: .rounded))
+            .monospacedDigit()
+            .numericTextTransition()
+            .frame(width: Self.discSize, height: Self.discSize)
+    }
+
+    /// 健康、循环、温度三个小读数。要留意的那一格变橙色，鼠标停上去有一句说明。
+    private var statRow: some View {
+        HStack(spacing: 6) {
+            ForEach(model.batteryStats) { stat in
+                HStack(spacing: 3) {
+                    Image(systemName: stat.symbol)
+                        .font(.caption2.weight(.semibold))
+                    Text(stat.value)
+                        .font(.caption.weight(.medium))
+                        .monospacedDigit()
+                }
+                .foregroundStyle(stat.warn ? Color.orange : Color.secondary)
+                .padding(.horizontal, 7)
+                .padding(.vertical, 3)
+                .background(Capsule().fill(stat.warn ? Color.orange.opacity(0.14) : Color.primary.opacity(0.06)))
+                .help(stat.help)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(stat.help)
+            }
+        }
+    }
+
     /// 电量曲线：过去 16 小时和之后 8 小时的预测。还没有读数时不占地方。
+    /// 「现在」用最近一次读数的时间，和记下来的读数是同一个钟，实线不会画过「现在」那条线。
     @ViewBuilder private func curve(fillsHeight: Bool) -> some View {
-        let samples = model.history.samples(since: Date().addingTimeInterval(-TimeInterval(ChargeCurve.pastMinutes * 60)))
+        let now = model.now
+        let samples = model.history.samples(since: now.addingTimeInterval(-TimeInterval(ChargeCurve.pastMinutes * 60)))
         if !samples.isEmpty {
-            ChargeCurve(samples: samples, forecast: model.forecast, now: Date(), fills: fillsHeight)
+            ChargeCurve(samples: samples, forecast: model.forecast, now: now, fills: fillsHeight)
         }
     }
 
@@ -254,16 +317,34 @@ struct RootView: View {
 /// 一行提示：出错、写上限失败、时间表有问题都从这里说。
 struct MessageLine: View {
     var message: AppModel.Message
+    /// 不给就按语气选一个。
+    var symbol: String? = nil
+    /// 文字下面的一个按钮：标题和要做的事。
+    var action: (title: String, run: () -> Void)? = nil
     /// 有「关掉」动作才显示 ×。
     var dismiss: (() -> Void)? = nil
 
+    init(message: AppModel.Message, symbol: String? = nil, action: (title: String, run: () -> Void)? = nil,
+         dismiss: (() -> Void)? = nil) {
+        self.message = message
+        self.symbol = symbol
+        self.action = action
+        self.dismiss = dismiss
+    }
+
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
-            Image(systemName: symbol)
+            Image(systemName: symbol ?? toneSymbol)
                 .foregroundStyle(tint)
-            Text(message.text)
-                .font(.callout)
-                .fixedSize(horizontal: false, vertical: true)
+            VStack(alignment: .leading, spacing: 6) {
+                Text(message.text)
+                    .font(.callout)
+                    .fixedSize(horizontal: false, vertical: true)
+                if let action {
+                    Button(action.title, action: action.run)
+                        .controlSize(.small)
+                }
+            }
             Spacer(minLength: 0)
             if let dismiss {
                 Button(action: dismiss) {
@@ -279,7 +360,7 @@ struct MessageLine: View {
         .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(tint.opacity(0.12)))
     }
 
-    private var symbol: String {
+    private var toneSymbol: String {
         switch message.tone {
         case .info: return "info.circle.fill"
         case .success: return "checkmark.circle.fill"

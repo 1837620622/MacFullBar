@@ -163,21 +163,14 @@ public enum SmartPolicy {
                              deadline: deadline, learned: learned, plan: plan, cap: cap)
     }
 
-    /// 窗口里那句「现在在做什么」。
-    public static func explain(_ value: SmartDecision, target: Int) -> String {
-        switch value.decision.reason {
-        case .heat:
-            return T("电池偏热，先停在 80%")
-        case .topUp:
-            return T("临时充满到 100%")
-        case .deadline:
-            let at = value.deadline?.display ?? T("离电")
-            return T("为 %@ 拔电源做准备，补到 %@%", ["\(at)", "\(value.decision.limit)"])
-        default:
-            if let plan = value.plan, plan.minutesNeeded == 0 {
-                return T("已经补到 %@%，停在 %@% 不动", ["\(target)", "\(value.cap)"])
-            }
-            return T("平时停在 %@%，拔电源前会补满", ["\(value.cap)"])
+    /// 窗口里那句「现在在做什么」。`outage` 为 true 时，离电时间是工作日停电，不是你拔电源。
+    public static func explain(_ value: SmartDecision, target: Int, outage: Bool = false) -> String {
+        if let override = ChargePolicy.explainOverride(value.decision, deadline: value.deadline, outage: outage) {
+            return override
         }
+        if let plan = value.plan, plan.minutesNeeded == 0 {
+            return T("已经补到 %@%，停在 %@% 不动", ["\(target)", "\(value.cap)"])
+        }
+        return T("平时停在 %@%，拔电源前会补满", ["\(value.cap)"])
     }
 }

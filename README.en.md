@@ -1,154 +1,109 @@
 # Charge Limit
 
-**Easier on your battery, and full enough when you unplug.**
-
-Charge Limit is a macOS menu bar battery charge limit app for MacBook, on Apple silicon and Intel. Most of the time it holds the battery around 80%, so it doesn't sit full for hours, which helps protect battery health. It learns the time you usually unplug and fills the battery up before then. Free and open source.
+A small macOS menu bar app that keeps your MacBook's battery around 80% most of the time, then fills it up before you usually unplug. Works on Apple silicon and Intel. Free and open source.
 
 English · [繁體中文](README.zh-Hant.md) · [简体中文](README.md)
 
 <p align="center">
-  <img src="docs/images/main-smart-en.png" height="460" alt="Main window: Smart mode">
-  <img src="docs/images/settings-en.png" height="460" alt="Settings window">
+  <img src="docs/images/main-smart-en.png" height="460" alt="Main window in Smart mode">
+  <img src="docs/images/settings-en.png" height="460" alt="Settings">
 </p>
 
-## Features
+## Why
 
-### Protect battery health
+Lithium batteries wear fastest when they sit at 100%, and faster still when they're warm and full. Plenty of MacBooks spend most of the day plugged in at 100%. macOS's Optimized Battery Charging holds back the last stretch too, but the system decides when and for how long, and you can't change it.
 
-- **Holds around 80% day to day**: Smart mode's everyday limit can be 80, 85, 90 or 95, or any value you enter. A battery that isn't kept full for hours ages more slowly.
-- **Three modes**: Smart, Fixed schedule and Always full, so you can match how you use the Mac.
-- **Heat protection**: in every mode. At 35°C the limit drops to 80%, and it resumes below 33°C.
-- **Discharge helper (optional)**: when the charge is above the limit, it can discharge back down to the limit instead of only pausing charging.
-- **Health and cycles**: read from the system and explained in the main window. It warns when health falls below 80%, and when the cycle count has used up more than 80% of the design life. Health is an estimate from the system.
+This app does one thing: hold the battery at a level you choose, and top it up shortly before you usually head out.
 
-### Have charge when you need it
+## Download
 
-- **Learns when you usually unplug**: after 3 unplugs within one hour, it fills the battery to your target (80, 90 or 100, or any value you enter) before that time.
-- **Full before unplugging** (Fixed schedule): works out from this Mac's real charging speed, and lifts the limit early when there's time, so the battery is full when you unplug.
-- **Top up**: charges to 100% right away. It stops when you unplug.
-- **Weekday power cuts (dorm)**: charges to your target before the cut. With **Keep Low Power Mode during power cuts** on, it turns on Low Power Mode during the cut to save battery, and turns it off when power returns. Weekends are not affected.
-
-### Warnings and alerts
-
-- **Tips in the main window**: up to three at a time, warnings first. They cover a hot battery, a charger too weak to keep up (plugged in but still draining), slow charging, low health or most of the cycle life used, and high memory pressure (a warning while on battery).
-- **Tonight's plan**: shows when the battery should be full. If it won't make it in time, the plan says so and offers Top up.
-- **System notifications** (off by default, turn on in Settings): the limit being lifted early, overheating holding the limit at 80%, and reaching the limit.
-
-### More
-
-- **Charge curve**: the last 16 hours as a solid line, and the next 8 hours as a dashed forecast.
-- **Habits and details**: what the app has learned, the basis for it, your recent unplugs, how many more are needed, and tips.
-- **Notch island**: pops up when you plug or unplug power, and has a Top up button.
-- **Three languages**: Simplified Chinese, Traditional Chinese and English, following the system by default.
-- **Launch at login, automatic update checks, and issue reporting**: the diagnostics are already filled in, so you just open the issue on GitHub.
-
-## Three modes
-
-Pick one at the top of the window:
-
-| Mode | Best for | What it does |
-|---|---|---|
-| **Smart** (default) | Most people | Holds your everyday limit (80%, or 85, 90, 95). It learns when you usually unplug, and before then charges to your target (100%, or 80, 90). Both numbers have a Custom option for any value. |
-| **Fixed schedule** | People who want to set the times | Splits the day into blocks, each holding the limit you choose (80, 85, 90, 95, 100). Time outside any block charges to 100%. Each block can turn on discharging, which needs the discharge helper. You can also choose "Full before unplugging". |
-| **Always full** | Desktops, or machines that are always plugged in | Charges to 100% whenever it's on power. |
-
-All three modes have heat protection: when the battery reaches 35°C the limit drops to 80%, and it resumes below 33°C.
-
-## How it learns your habits
-
-- The first time each day you stay on power for 30 minutes or more and then unplug counts as one "unplugged" event. Brief unplugs, like moving the laptop around, don't count.
-- Once 3 of those land within one hour of each other, it can say "you usually unplug around …", and fills the battery before that time. Under "Habits and details" in Smart mode you can see which unplugs were recorded, how many more are needed, and tips.
-- Records stay on this Mac and are never uploaded. To start over, tap "Learn again" in Smart mode. To stop learning, turn off "Remember my charging habits"; it then only uses the time you set yourself.
-
-## Interface
-
-- **Main window:** battery level, what it's doing now, tonight's plan, the charge curve (the last 16 hours as a solid line, and the next 8 hours as a dashed forecast), the three modes, and top-up.
-- **Settings** (gear icon, top right): language (Simplified Chinese, Traditional Chinese, English, default follows the system), launch at login, notifications, weekday power cuts (dorm), appearance, Notch island, Advanced (discharge helper, no discharging today), and About.
-- **Notch island** (Macs with a notch): click the notch to expand, click again to collapse. It pops up by itself when you plug or unplug power, and closes after a few seconds. On Macs without a notch, turn on "Also use it without a notch" in Settings to show it in the middle of the menu bar.
-
-<p align="center">
-  <img src="docs/images/island-expanded-en.png" width="420" alt="Notch island expanded">
-</p>
-
-## Install
-
-Download the file for your chip from [Releases](https://github.com/1837620622/MacFullBar/releases):
+Get the latest build from [Releases](https://github.com/1837620622/MacFullBar/releases) and pick the one for your chip:
 
 - Apple silicon: `MacBatteryCharge-<version>-arm64.dmg` or `.pkg`
 - Intel: `MacBatteryCharge-<version>-intel.dmg` or `.pkg`
 
-Open the DMG and drag Charge Limit into Applications. The PKG walks you through installing it into Applications.
+Open the DMG and drag Charge Limit into Applications, or double-click the PKG and follow along. Needs macOS 13 or later.
 
-The app is not notarized by Apple. If macOS blocks it the first time, go to System Settings → Privacy & Security and click "Open Anyway".
+The app isn't notarized by Apple, so macOS will block it the first time you open it. Go to System Settings → Privacy & Security, scroll down, and click "Open Anyway".
 
-## Updates
+## What it looks like
 
-- While the app runs, it checks once after launch and then about every 6 hours. You can turn this off with "Check for new versions automatically" in Settings.
-- When a new version is available, a notice appears at the top of the main window and in Settings. "Download New Version" opens the right installer for your chip in your browser, and you install it yourself. "Later" hides that version.
-- The app never downloads or installs for you, and never asks for a password. After you install a new version, the old one still running reopens itself within about 15 seconds. This also works when you run the app from the disk image. Settings and data are kept.
-- After installing a new version over the old one with the DMG, the discharge helper stays on the old version. Install it again in Settings → Advanced. The PKG replaces it automatically.
+It sits in the menu bar as a small battery with the current percentage next to it. Click it and a window drops down. Top left is the charge level, and next to it is what the app is doing right now, for example "Holding steady, running from power". Under that is a row with battery health, cycle count and temperature; any of them turns orange when it's worth a look. Further down you'll see tonight's plan (when you usually unplug and roughly when it'll be full) and a chart of the last 16 hours.
 
-## Feedback
+The middle of the window is where you pick one of three modes.
 
-Settings → About → "Report an issue" opens a new GitHub issue in your browser, with the title and diagnostics filled in: app version, macOS version, mode, battery level, who is enforcing the limit, the state of the discharge helper and updates, and the last 120 log lines (your home folder is shown as `~`). The diagnostics don't include battery history or anything from the window. If they're too long for a URL, they're copied to the clipboard for you to paste into the issue.
+**Smart** (the default). Holds at 80% day to day. You can change that to 85, 90 or 95, or type in your own number. It learns when you usually unplug and tops up to 100% before then (or just 80 or 90 if you prefer). It works out when to start from how fast this particular Mac charges, so it's usually full about 15 minutes before you leave.
 
-## Permissions and privacy
+**Fixed schedule**. Split the day into blocks and give each one a limit, say 80% during the day and 100% overnight. Time outside any block charges to 100%. You can also set a "Fill up before you unplug" time.
 
-- Reading the battery and temperature: no permission needed.
-- Setting the charge limit: no password needed.
-- No Full Disk Access, Accessibility, Screen Recording, or Input Monitoring. The Notch island only uses the mouse position and clicks.
-- No account, no uploads of battery data, no usage tracking.
-- The app makes one network request on its own: checking for new versions, which reads the version number and download link from GitHub. Everything else opens a GitHub page in your browser only when you click it (download, feedback, project homepage, sponsorship).
+**Always full**. Charges to 100% whenever it's plugged in. Good for a laptop that lives on a desk.
+
+All three behave the same when it's hot: once the battery reaches 35°C it holds at 80% until it cools to 33°C.
+
+If you need a full battery right now, click "Top up" at the bottom of the window. It goes back to your usual setting when you unplug (in Fixed schedule, when the current block ends).
+
+When something needs explaining, an extra line shows up in the window: the charger is too weak and the battery is draining while plugged in, or the battery is above the limit and the app is only pausing charging rather than draining it.
+
+## How it learns your routine
+
+The first time each day that you've been plugged in for more than 30 minutes and then unplug counts once. When three of those land within the same hour, it treats that as your usual unplug time and starts topping up ahead of it. Unplugging for a minute to move rooms doesn't count.
+
+Until then it uses the time you entered during setup (11:30 PM by default). Everything it learns stays on this Mac. To start over, open "Habits and details" and click "Learn again". To stop it learning, turn off "Remember my charging habits".
+
+## Weekday power cuts
+
+If your power goes off on weekday nights (common in some dorms), open Settings → Weekday power cuts and enter when the power goes off and comes back (11:30 PM to 6:00 AM by default). Monday to Friday it charges to your "How full when you unplug" level before the cut. Weekends are left alone.
+
+To save power during the cut, tick "Keep Low Power Mode during power cuts". The app turns on macOS Low Power Mode during the cut and turns it off when power returns. It's off by default. It only turns off what it turned on: if you had already switched Low Power Mode on yourself, it leaves it be, and if the Mac restarted in the middle of the cut, it still turns it off afterwards. This needs the discharge helper.
 
 ## Discharge helper (optional)
 
-macOS's own charge limit only stops charging. It won't discharge while plugged in. To drop from 85% to 80%, the power adapter has to be disconnected briefly, which means writing to the SMC. That needs a small helper that runs as root.
+macOS's charge limit can only stop charging. It can't drain the battery. If the battery is at 90% and you set the limit to 80%, it just sits at 90% until you use it down.
 
-- It is only used in blocks of a fixed schedule where you turned on "Discharging". Installing it asks for your administrator password once through macOS. The password never passes through this app.
-- It does three things: disconnects and reconnects the power adapter; on Intel Macs without a system charge limit, stops charging through BCLM; and reports its status.
-- Discharging needs all of these: the block has "Discharging" on, the battery temperature can be read, the charge is at least 3% above the limit and above 20%, and "No discharge today" is off. It reconnects power once the limit is reached.
-- During sleep it doesn't discharge, and it reconnects power. If the app quits, or it hasn't heard from the app for two minutes, it reconnects power by itself.
-- To remove it: Settings → Advanced → "Remove the discharge helper". It reconnects power before removing anything.
+The discharge helper is a small program that runs as root. It can disconnect the power adapter for a while so the Mac runs on battery, then reconnect it once the battery reaches the limit. It also handles Low Power Mode during power cuts, and on Macs where macOS can't set a limit (Intel, for example) it's what stops charging.
 
-## Weekday power cuts and Low Power Mode (needs the discharge helper)
+Install it from Settings → Advanced. macOS asks for your administrator password once; the password never passes through this app. It only discharges during blocks of your Fixed schedule where you turned on "Discharging", and only when the battery is at least 3% above the limit, above 20%, and the temperature can be read. Click "No discharge today" to skip a day. It doesn't discharge while the Mac is asleep, and if the app quits or goes quiet for two minutes, the helper reconnects power on its own. You can remove it from the same place; it reconnects power before it goes.
 
-If you lose power on weekday nights, for example in a dorm, turn on "Weekday power cuts" in Settings and set the times. The default is 23:30 to 06:00.
+## Updates
 
-- It only applies Monday to Friday. On weekends you have power all day, and the settings above apply as usual.
-- Before the cut, the app charges to your target (100% by default), so the battery is full when the power goes out.
-- Low Power Mode is off during the cut by default, and the battery charges as usual. Tick **Keep Low Power Mode during power cuts** and the app turns on macOS Low Power Mode during the cut to save battery. When power returns, it turns Low Power Mode off right away, so charging during the day doesn't slow you down.
-- It only turns off what it turned on itself; anything you set by hand stays.
-- Low Power Mode uses the same discharge helper, so you only install it once.
+About every six hours the app checks whether there's a new version (you can turn this off in Settings). When there is one, a banner appears at the top of the window. "Download New Version" opens the installer for your chip in your browser, and you install it yourself. Once it's installed, the copy that's running reopens itself within about fifteen seconds, with your settings and history intact.
 
-## Honest limits
+If you install over the old version with the DMG, the discharge helper stays on the old version, so reinstall it in Settings → Advanced. The PKG replaces it for you.
 
-- Keeping the battery ready before you unplug is not a guarantee. If you unplug earlier than usual, or charging is slower (a power bank, for example), you may not reach the target in time. When the Mac is too hot, the limit stays at 80%, so it may not fill up either.
-- Apple's own limit isn't exact. It can be a few percentage points off and sometimes charges to 100%. The app can't change that.
-- Temperature comes from the battery sensor the system reads, and may differ slightly from what other tools show. 35°C and 33°C are conservative values we chose; Apple's published range is an ambient 10–35°C.
-- CI can build, test, package, and generate screenshots for this app, but it can't test on every real Mac. Try it on your own Mac, and report problems in [Issues](https://github.com/1837620622/MacFullBar/issues).
+## Privacy
 
-## Development
+Reading the battery and setting the limit need no special permissions and no password (except for installing the discharge helper). No Full Disk Access, Accessibility, Screen Recording or Input Monitoring; the notch island only uses the mouse position and clicks. There's no account and no battery data leaves your Mac. The only place the app contacts on its own is GitHub, to check the latest version number.
+
+Settings and history live in `~/Library/Application Support/MacBatteryCharge`. "Open data folder" in Settings takes you there.
+
+## Known issues
+
+- Topping up ahead of time is an estimate. If you unplug earlier than usual, or charging is slower than usual (a smaller charger, say), it may not be full in time. When the battery is too hot it only goes to 80%.
+- Apple's own charge limit isn't exact. It can be a few percent off and occasionally charges to 100%. The app can't change that.
+- On a few Macs with newer firmware, macOS won't let anyone change the limit and the discharge helper can't either. The window says so plainly instead of pretending to work.
+- It hasn't been tested on every Mac. If something goes wrong, use Settings → About → "Report an issue". It opens a new GitHub issue with the version, macOS version and recent log lines filled in (your home folder replaced with `~`), so you can read it before you send it.
+
+## Uninstall
+
+If you installed the discharge helper, remove it first in Settings → Advanced. Then turn off "Open at login", quit the app, and drag Charge Limit from Applications to the Trash. To delete its records too, remove `~/Library/Application Support/MacBatteryCharge`. The system charge limit stays at the last value the app set; if System Settings has a charge limit option on your Mac, you can set it back to 100% there.
+
+## Building
 
 ```bash
-swift test                                              # Logic tests, no hardware involved
-bash packaging/build.sh                                 # Build for both chips, make the PKG and DMG, check icons and languages
-.build/release/MacBatteryCharge --snapshot snapshots    # Render UI screenshots from sample data
+swift test                                              # logic tests, no hardware needed
+bash packaging/build.sh                                 # build for both chips, make the PKG and DMG
+.build/release/MacBatteryCharge --snapshot snapshots    # render UI screenshots from sample data
 ```
 
-Design docs (in Chinese): [设计要求](docs/设计要求.md), [设计核对](docs/设计核对.md), [界面](docs/界面.md), [调研](docs/调研.md). Changes by version: [CHANGELOG](CHANGELOG.md).
+Design notes (in Chinese): [设计要求](docs/设计要求.md), [设计核对](docs/设计核对.md), [界面](docs/界面.md), [调研](docs/调研.md). What changed in each version: [CHANGELOG](CHANGELOG.md).
 
 ## Sponsorship
 
-Charge Limit is free and open source. Every feature is free, and it will stay free for individuals.
+Every feature is free, and it will stay free for individuals. If it's useful to you, you're welcome to chip in any amount; it doesn't unlock anything. For company sponsorship, custom work or support, see [enterprise cooperation](docs/企业合作.en.md). Payments aren't set up yet, so for now open an issue at [Issues](https://github.com/1837620622/MacFullBar/issues/new/choose) titled "Sponsorship" or "Enterprise cooperation".
 
-- **Individuals:** if it keeps you charged when you need it, you're welcome to sponsor it. Any amount is fine, and it unlocks nothing.
-- **Companies:** sponsorship, custom work, and support can be arranged separately. See [enterprise cooperation](docs/企业合作.en.md).
+## Thanks
 
-Payment options aren't set up yet. To sponsor or discuss a partnership, open an issue at [Issues](https://github.com/1837620622/MacFullBar/issues/new/choose) with the title "Sponsorship" or "Enterprise cooperation", and the author will reply.
-
-## Acknowledgements
-
-Thanks to [Calma](https://github.com/Milanpatel35/calma) and [batt](https://github.com/charlie0129/batt) for their public work and ideas.
+[Calma](https://github.com/Milanpatel35/calma) and [batt](https://github.com/charlie0129/batt) published the research and ideas this builds on.
 
 ## License
 
