@@ -18,6 +18,10 @@ struct ChargeCurve: View {
     static let gapMinutes = 20.0
     /// 底下留给时间标签的高度。
     private static let labelHeight: CGFloat = 16
+    /// 右边留给刻度的宽度。线都画在它左边，刻度字不会被预测的虚线穿过去。
+    private static let axisWidth: CGFloat = 30
+    /// 上面留一点：100% 的刻度字以那条线为中心，不会被切掉一半。
+    private static let topInset: CGFloat = 6
 
     var body: some View {
         Card {
@@ -39,22 +43,25 @@ struct ChargeCurve: View {
     private func draw(in context: inout GraphicsContext, size: CGSize) {
         let total = Double(Self.pastMinutes + Self.futureMinutes)
         let plotHeight = size.height - Self.labelHeight
+        let plotWidth = size.width - Self.axisWidth
         // 横轴：从 16 小时前到 8 小时后，「现在」在三分之二的地方。纵轴：0 到 100%。
-        func x(_ minutes: Double) -> CGFloat { CGFloat((minutes + Double(Self.pastMinutes)) / total) * size.width }
-        func y(_ percent: Double) -> CGFloat { plotHeight * (1 - CGFloat(min(100, max(0, percent)) / 100)) }
+        func x(_ minutes: Double) -> CGFloat { CGFloat((minutes + Double(Self.pastMinutes)) / total) * plotWidth }
+        func y(_ percent: Double) -> CGFloat {
+            Self.topInset + (plotHeight - Self.topInset) * (1 - CGFloat(min(100, max(0, percent)) / 100))
+        }
 
         for level in [0.0, 50.0, 100.0] {
             var line = Path()
             line.move(to: CGPoint(x: 0, y: y(level)))
-            line.addLine(to: CGPoint(x: size.width, y: y(level)))
+            line.addLine(to: CGPoint(x: plotWidth, y: y(level)))
             context.stroke(line, with: .color(.primary.opacity(0.08)), lineWidth: 1)
         }
-        // 刻度写在线的右端下面：100% 那条线常被预测的虚线压着，写在下面不打架。
-        Self.caption("100%", in: &context, at: CGPoint(x: size.width, y: y(100) + 2), anchor: .topTrailing, faint: true)
-        Self.caption("50%", in: &context, at: CGPoint(x: size.width, y: y(50) + 2), anchor: .topTrailing, faint: true)
+        // 刻度放在右边自己那一栏，和线对齐。
+        Self.caption("100%", in: &context, at: CGPoint(x: size.width, y: y(100)), anchor: .trailing, faint: true)
+        Self.caption("50%", in: &context, at: CGPoint(x: size.width, y: y(50)), anchor: .trailing, faint: true)
 
         var nowLine = Path()
-        nowLine.move(to: CGPoint(x: x(0), y: 0))
+        nowLine.move(to: CGPoint(x: x(0), y: Self.topInset))
         nowLine.addLine(to: CGPoint(x: x(0), y: plotHeight))
         context.stroke(nowLine, with: .color(.secondary.opacity(0.6)), style: StrokeStyle(lineWidth: 1, dash: [3, 3]))
 
@@ -102,7 +109,7 @@ struct ChargeCurve: View {
 
         Self.caption(T("16 小时前"), in: &context, at: CGPoint(x: 0, y: size.height), anchor: .bottomLeading)
         Self.caption(T("现在"), in: &context, at: CGPoint(x: x(0), y: size.height), anchor: .bottom)
-        Self.caption(T("之后 8 小时"), in: &context, at: CGPoint(x: size.width, y: size.height), anchor: .bottomTrailing)
+        Self.caption(T("之后 8 小时"), in: &context, at: CGPoint(x: plotWidth, y: size.height), anchor: .bottomTrailing)
     }
 
     /// 时间标签：小字，灰色。`Text.foregroundStyle` 只有 macOS 14 才有，我们最低支持 13，
