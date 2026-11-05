@@ -101,11 +101,15 @@ struct RootView: View {
                             action: (title: T("放进“应用程序”"), run: { model.moveToApplications() }))
                     .disabled(model.moving)
             }
-            // 读数里要你留意的：充电器跟不上、充得慢、高于上限只停充。条件没了自己消失。
-            ForEach(model.notices) { notice in
-                MessageLine(message: AppModel.Message(tone: notice.tone == .warn ? .error : .info, text: notice.text),
-                            symbol: notice.symbol)
+            // 读数里要你留意的：充电器跟不上、充得慢、高于上限只停充。条件没了自己消失，出现和消失都淡入淡出。
+            Group {
+                ForEach(model.notices) { notice in
+                    MessageLine(message: AppModel.Message(tone: notice.tone == .warn ? .error : .info, text: notice.text),
+                                symbol: notice.symbol)
+                        .transition(.opacity)
+                }
             }
+            .animation(Motion.standard, value: model.notices)
             UpdateBanner(model: model)
             tonightCard
                 .animation(Motion.standard, value: model.tonight)
@@ -133,7 +137,7 @@ struct RootView: View {
                 LiquidDisc(level: level, limit: model.decision.limit,
                            tint: ringColor, flow: model.displayFlow, live: model.liveMotion)
                     .frame(width: Self.discSize, height: Self.discSize)
-                    .animation(.easeInOut(duration: 0.8), value: model.battery.percent)
+                    .animation(Motion.level, value: model.battery.percent)
                     .clipShape(Circle())
                     .overlay(Circle().stroke(Color.primary.opacity(0.12), lineWidth: 1))
                 // 数字一半在水里一半在水外时，水里那半是白的，水外那半是正文色，两边都看得清。
@@ -148,7 +152,7 @@ struct RootView: View {
                             Rectangle().frame(height: Self.discSize * level)
                         }
                     }
-                    .animation(.easeInOut(duration: 0.8), value: model.battery.percent)
+                    .animation(Motion.level, value: model.battery.percent)
             }
             .frame(width: Self.discSize, height: Self.discSize)
             .accessibilityElement(children: .ignore)

@@ -19,7 +19,7 @@ struct ChoiceBar<Value: Hashable>: View {
             ForEach(options, id: \.self) { value in
                 let selected = value == selection
                 Button {
-                    withAnimation(.easeInOut(duration: 0.2)) { selection = value }
+                    withAnimation(Motion.quick) { selection = value }
                 } label: {
                     Text(title(value))
                         .font(.callout.weight(selected ? .semibold : .regular))

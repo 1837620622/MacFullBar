@@ -81,10 +81,14 @@ struct PreviewWallpaper: View {
     }
 }
 
-/// 动画的时长统一放在这里，免得各处各写一个数。快的用于选中和切换，标准的用于内容出现和消失。
+/// 动画的时长统一放在这里，免得各处各写一个数。快的用于选中和切换，标准的用于内容出现和消失，水位用于电量涨落。
+/// 系统设置里开了「减少动态效果」时一律不做动画，直接换成新的样子。
+@MainActor
 enum Motion {
-    static let quick = Animation.easeInOut(duration: 0.2)
-    static let standard = Animation.easeInOut(duration: 0.3)
+    static var reduced: Bool { NSWorkspace.shared.accessibilityDisplayShouldReduceMotion }
+    static var quick: Animation? { reduced ? nil : .easeInOut(duration: 0.2) }
+    static var standard: Animation? { reduced ? nil : .easeInOut(duration: 0.3) }
+    static var level: Animation? { reduced ? nil : .easeInOut(duration: 0.8) }
 }
 
 extension View {
