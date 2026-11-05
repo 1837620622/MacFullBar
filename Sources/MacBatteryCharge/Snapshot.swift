@@ -33,6 +33,16 @@ enum Snapshot {
             let model = sampleModel(mode: .smart, language: language)
             ok = render(RootView(model: model), size: popoverSize, appearance: .darkAqua,
                         to: file("main-smart-dark-\(tag).png")) && ok
+            // 要留意的情况：充电器跟不上、电池偏热、健康偏低。看提醒和顶上那一排变橙色的样子。
+            let alerts = sampleModel(mode: .smart, language: language) { battery in
+                battery.milliamps = -600
+                battery.adapterWatts = 30
+                battery.temperatureRaw = 3640
+                battery.nominalCapacity = 4700
+                battery.cycles = 850
+            }
+            ok = render(RootView(model: alerts), size: popoverSize, appearance: .aqua,
+                        to: file("main-alerts-\(tag).png")) && ok
             if let release = ReleaseInfo.parse(Data(#"{"tag_name":"v9.0.0","assets":[]}"#.utf8)) {
                 let ready = sampleModel(mode: .smart, language: language)
                 ready.loadPreviewUpdate(.available(release))
@@ -70,9 +80,10 @@ enum Snapshot {
         return ok
     }
 
-    /// 假数据：80% 接着电源，有半年的记录，学到的拔电时间是 18:40 前后。
+    /// 假数据：80% 接着电源，有半年的记录，学到的拔电时间是 18:40 前后。`adjust` 用来改出别的情况。
     @MainActor
-    static func sampleModel(mode: ChargeMode, language: AppLanguage = .en) -> AppModel {
+    static func sampleModel(mode: ChargeMode, language: AppLanguage = .en,
+                            adjust: (inout BatterySnapshot) -> Void = { _ in }) -> AppModel {
         let model = AppModel(preview: true, previewMode: mode, previewLanguage: language)
         let now = Calendar.current.date(bySettingHour: 14, minute: 10, second: 0, of: Date()) ?? Date()
 
@@ -89,6 +100,7 @@ enum Snapshot {
         battery.temperatureRaw = 3060
         battery.externalConnected = true
         battery.adapterWatts = 70
+        adjust(&battery)
 
         let gib: UInt64 = 1 << 30
         let page: UInt64 = 16_384
@@ -184,7 +196,7 @@ enum Snapshot {
         return rep.representation(using: .png, properties: [:])
     }
 
-    /// 菜单栏图标：上面一行是上限，下面一行是状态。
+    /// 菜单栏图标：五格电池，右边是电量，充电时带闪电。
     @MainActor
     static func writeMenuBar(to url: URL) -> Bool {
         let image = MenuBarIcon.image(percent: 80, charging: true)

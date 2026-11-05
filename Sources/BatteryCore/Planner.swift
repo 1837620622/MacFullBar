@@ -57,6 +57,22 @@ public enum ChargePolicy {
     /// 过热保护在所有模式里都生效：电池偏热时最高停在 80%，哪怕是一直充满或者临时充满。
     public static let heatLimit = 80
 
+    /// 上限被临时改动时（过热、临时充满、离电前提前补），窗口顶上那一句怎么说。三种模式共用；平常的情况返回 nil，由各模式自己说。
+    public static func explainOverride(_ decision: LimitDecision, deadline: ClockTime?, outage: Bool) -> String? {
+        switch decision.reason {
+        case .heat:
+            return T("电池偏热，先停在 80%")
+        case .topUp:
+            return T("临时充满到 100%")
+        case .deadline:
+            let at = deadline?.display ?? T("离电")
+            return outage ? T("为 %@ 停电做准备，补到 %@%", ["\(at)", "\(decision.limit)"])
+                          : T("为 %@ 拔电源做准备，补到 %@%", ["\(at)", "\(decision.limit)"])
+        default:
+            return nil
+        }
+    }
+
     public static func applyHeat(_ decision: LimitDecision, heat: Bool) -> LimitDecision {
         guard heat, decision.limit > heatLimit else { return decision }
         var result = decision

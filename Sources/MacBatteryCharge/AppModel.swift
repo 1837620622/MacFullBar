@@ -160,11 +160,15 @@ final class AppModel: ObservableObject {
         return Date().timeIntervalSince(failed.at) < 300
     }
 
-    var advice: [AdviceItem] {
-        Advice.top(Advice.items(battery: battery, memory: reading?.memory ?? MemorySnapshot(),
-                                limit: reading?.chargeLimit.isSupported == true || helperUsable ? decision.limit : nil,
-                                heatActive: heatActive, discharging: discharging))
+    /// 主窗口里的提醒：充电器跟不上、充得慢、高于上限只停充这类，窗口别处没说的。最多两条。
+    var notices: [AdviceItem] {
+        Advice.notices(battery: battery, memory: reading?.memory ?? MemorySnapshot(),
+                       limit: reading?.chargeLimit.isSupported == true || helperUsable ? decision.limit : nil,
+                       heatActive: heatActive, discharging: discharging)
     }
+
+    /// 顶上那一排小读数：健康、循环、温度。
+    var batteryStats: [BatteryStat] { Advice.stats(battery) }
 
     var learnedRate: Double? { history.learnedRate() }
     /// 从历史里学到的拔电源时间，智能模式用。
@@ -178,10 +182,15 @@ final class AppModel: ObservableObject {
     }
     /// 离电前要充满的时间：停电优先，其次是自己设的（开着才有）。
     var deadlineNow: ClockTime? { outageDeadline ?? (settings.deadlineEnabled ? settings.deadline : nil) }
-    /// 备电要按的离电时间。停电的日子就是停电开始；智能模式其次用学到的；再不然用 `deadlineNow`。
+    /// 备电要按的离电时间。停电的日子就是停电开始；智能模式其次用学到的，再不然用自己设的时间。
+    /// 一直充满没有「拔电源前补电」这回事，只有停电的日子才有离电时间。
     var departureTime: ClockTime? {
-        if outageDeadline == nil, settings.mode == .smart, let learned = learnedUnplug { return learned }
-        return deadlineNow
+        if let outage = outageDeadline { return outage }
+        switch settings.mode {
+        case .smart: return learnedUnplug ?? deadlineNow
+        case .fixed: return deadlineNow
+        case .full: return nil
+        }
     }
     /// 现在是不是在停电里。停电时没有电源；要不要开低电量，看 settings.outageLowPower。
     var outageNow: Bool {
@@ -192,14 +201,17 @@ final class AppModel: ObservableObject {
 
     /// 现在这套模式实际要的上限和原因。
     var modeDescription: String {
+        let outage = outageDeadline != nil
         switch settings.mode {
         case .smart:
             guard let smart = smartDecision else { return settings.mode.title }
-            return SmartPolicy.explain(smart, target: settings.unplugTarget)
+            return SmartPolicy.explain(smart, target: settings.unplugTarget, outage: outage)
         case .fixed:
-            return T("按时间表 · %@%", ["\(decision.limit)"])
+            // 过热、临时充满、提前补电时，上限已经不是时间表上的数，要说清楚为什么。
+            return ChargePolicy.explainOverride(decision, deadline: deadlineNow, outage: outage)
+                ?? T("按时间表 · %@%", ["\(decision.limit)"])
         case .full:
-            return T("一直充到 100%")
+            return ChargePolicy.explainOverride(decision, deadline: nil, outage: outage) ?? T("一直充到 100%")
         }
     }
 
@@ -210,7 +222,8 @@ final class AppModel: ObservableObject {
     var displayFlow: PowerFlow { discharging ? .discharging : battery.flow }
     /// 画面里的动画只在窗口看得见、并且没开“减少动态效果”时才跑。
     var liveMotion: Bool { windowVisible && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion }
-    private var now: Date { reading?.date ?? Date() }
+    /// 最近一次读数的时间。电量曲线的「现在」用它，和记下来的读数对得上。
+    var now: Date { reading?.date ?? Date() }
 
     // MARK: 生命周期
 
@@ -305,7 +318,10 @@ final class AppModel: ObservableObject {
                                          deadline: deadline, target: settings.unplugTarget,
                                          rate: learnedRate), plan.liftNow {
             deadlineLift = (plan.target, value.date.addingTimeInterval(Double(plan.minutesToDeadline) * 60))
-            notify("deadline", T("提前放开到 %@%", ["\(plan.target)"]), T("按这台机器的充电速度，赶在 %@ 断电前充满。", ["\(deadline.display)"]))
+            let body = outageDeadline != nil
+                ? T("按这台机器的充电速度，赶在 %@ 停电前充满。", ["\(deadline.display)"])
+                : T("按这台机器的充电速度，赶在 %@ 拔电源前充满。", ["\(deadline.display)"])
+            notify("deadline", T("提前放开到 %@%", ["\(plan.target)"]), body)
         }
 
         helper = value.helper
@@ -1079,9 +1095,9 @@ final class AppModel: ObservableObject {
                                       deadline: deadline, target: settings.unplugTarget,
                                       rate: learnedRate, window: 1439)
         case .full:
-            // 一直充满不看时间表，按现在就充来算。base 是 100，所以不会有放开时间。
+            // 一直充满：只有停电的日子会走到这里，目标就是 100%，按现在就充来算。
             plan = ChargePlanner.plan(minute: minute, percent: percent, deadline: deadline,
-                                      target: settings.unplugTarget, base: 100,
+                                      target: 100, base: 100,
                                       rate: learnedRate, window: 1439)
         }
         guard let plan else { return nil }

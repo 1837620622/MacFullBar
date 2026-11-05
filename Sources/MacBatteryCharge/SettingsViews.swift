@@ -95,8 +95,8 @@ struct SettingsView: View {
                     Toggle(T("显示灵动岛"), isOn: $model.settings.notchIsland)
                     Toggle(T("插拔电源时弹出"), isOn: $model.settings.notchOnPower)
                         .disabled(!model.settings.notchIsland)
+                    // 两侧小字可以单独开：不展开、不看鼠标，只在刘海两边写上限和状态。所以它不跟着上面那个变灰。
                     Toggle(T("刘海两侧显示小字"), isOn: $model.settings.notchEars)
-                        .disabled(!model.settings.notchIsland)
                     Toggle(T("没有刘海也用（菜单栏正中）"), isOn: $model.settings.notchWithoutNotch)
                 } header: {
                     Text(T("刘海灵动岛"))

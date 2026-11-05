@@ -49,23 +49,40 @@ struct ChargeCurve: View {
             line.addLine(to: CGPoint(x: size.width, y: y(level)))
             context.stroke(line, with: .color(.primary.opacity(0.08)), lineWidth: 1)
         }
+        // 刻度写在线的右端下面：100% 那条线常被预测的虚线压着，写在下面不打架。
+        Self.caption("100%", in: &context, at: CGPoint(x: size.width, y: y(100) + 2), anchor: .topTrailing, faint: true)
+        Self.caption("50%", in: &context, at: CGPoint(x: size.width, y: y(50) + 2), anchor: .topTrailing, faint: true)
 
         var nowLine = Path()
         nowLine.move(to: CGPoint(x: x(0), y: 0))
         nowLine.addLine(to: CGPoint(x: x(0), y: plotHeight))
         context.stroke(nowLine, with: .color(.secondary.opacity(0.6)), style: StrokeStyle(lineWidth: 1, dash: [3, 3]))
 
-        var past = Path()
+        // 记下来的读数：按时间连成几段（中间断了 20 分钟以上就断开），每段下面铺一层渐淡的底色。
+        var segments: [[CGPoint]] = []
         var last: Date?
         for sample in samples {
-            let minutes = sample.t.timeIntervalSince(now) / 60
-            let point = CGPoint(x: x(minutes), y: y(Double(sample.p)))
-            if let last, sample.t.timeIntervalSince(last) / 60 <= Self.gapMinutes {
-                past.addLine(to: point)
+            let point = CGPoint(x: x(sample.t.timeIntervalSince(now) / 60), y: y(Double(sample.p)))
+            if let last, sample.t.timeIntervalSince(last) / 60 <= Self.gapMinutes, !segments.isEmpty {
+                segments[segments.count - 1].append(point)
             } else {
-                past.move(to: point)
+                segments.append([point])
             }
             last = sample.t
+        }
+        let fade = Gradient(colors: [Color.accentColor.opacity(0.22), Color.accentColor.opacity(0)])
+        var past = Path()
+        for points in segments {
+            guard let first = points.first, let end = points.last else { continue }
+            past.move(to: first)
+            points.dropFirst().forEach { past.addLine(to: $0) }
+            guard points.count > 1 else { continue }
+            var area = Path()
+            area.move(to: CGPoint(x: first.x, y: plotHeight))
+            points.forEach { area.addLine(to: $0) }
+            area.addLine(to: CGPoint(x: end.x, y: plotHeight))
+            area.closeSubpath()
+            context.fill(area, with: .linearGradient(fade, startPoint: CGPoint(x: 0, y: y(100)), endPoint: CGPoint(x: 0, y: plotHeight)))
         }
         context.stroke(past, with: .color(.accentColor), style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
 
@@ -90,9 +107,10 @@ struct ChargeCurve: View {
 
     /// 时间标签：小字，灰色。`Text.foregroundStyle` 只有 macOS 14 才有，我们最低支持 13，
     /// 所以先 resolve 成 ResolvedText，再把颜色设在上面。
-    private static func caption(_ words: String, in context: inout GraphicsContext, at point: CGPoint, anchor: UnitPoint) {
-        var resolved = context.resolve(Text(words).font(.caption2))
-        resolved.shading = .color(.secondary)
+    private static func caption(_ words: String, in context: inout GraphicsContext, at point: CGPoint, anchor: UnitPoint,
+                                faint: Bool = false) {
+        var resolved = context.resolve(Text(words).font(.caption2).monospacedDigit())
+        resolved.shading = .color(faint ? Color.secondary.opacity(0.7) : Color.secondary)
         context.draw(resolved, at: point, anchor: anchor)
     }
 }
