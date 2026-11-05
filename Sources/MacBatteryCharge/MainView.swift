@@ -89,6 +89,12 @@ struct RootView: View {
                             action: model.helperInstallable ? (title: T("安装放电帮手"), run: { model.installHelper() }) : nil)
                     .disabled(model.helperBusy)
             }
+            // 用 DMG 覆盖安装后帮手还是旧的：放电和低电量模式停了，要在这里说，不能只藏在设置里。
+            if model.helperOutdated && model.helperInstallable {
+                MessageLine(message: AppModel.Message(tone: .info, text: T("放电帮手是旧版本：放电和低电量模式要重新安装一次。充电上限不受影响。")),
+                            action: (title: T("安装放电帮手"), run: { model.installHelper() }))
+                    .disabled(model.helperBusy)
+            }
             // 不在「应用程序」里跑的时候，登录时打开和装完新版本后自己重新打开都用不了。
             if model.offerMove {
                 MessageLine(message: AppModel.Message(tone: .info, text: T("现在不是从「应用程序」里打开的。放进去以后，登录时才会自己打开。")),
@@ -163,15 +169,30 @@ struct RootView: View {
                     .padding(.top, 4)
             }
             Spacer(minLength: 0)
-            Button {
-                switchPage(.settings)
-            } label: {
-                Image(systemName: "gearshape")
-                    .font(.system(size: 15, weight: .medium))
-                    .padding(.top, 2)
+            HStack(spacing: 12) {
+                // 重新打开、退出：以前只有右键菜单栏图标才找得到。
+                Menu {
+                    Button(T("重新打开充电上限")) { model.restartApp() }
+                        .disabled(!model.canRestart)
+                    Button(T("退出充电上限")) { model.quitApp() }
+                } label: {
+                    Image(systemName: "power")
+                        .font(.system(size: 15, weight: .medium))
+                }
+                .menuStyle(.borderlessButton)
+                .menuIndicator(.hidden)
+                .fixedSize()
+                .help(T("重新打开或退出"))
+                Button {
+                    switchPage(.settings)
+                } label: {
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 15, weight: .medium))
+                }
+                .buttonStyle(.plain)
+                .help(T("设置"))
             }
-            .buttonStyle(.plain)
-            .help(T("设置"))
+            .padding(.top, 2)
         }
         .padding(.horizontal, 18)
         .padding(.top, 14)

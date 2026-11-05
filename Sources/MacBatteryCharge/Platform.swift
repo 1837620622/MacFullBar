@@ -157,8 +157,9 @@ enum Installation {
         }
     }
 
-    /// 旧进程退出以后再打开新版本，避免同一个 bundle id 只激活旧进程。窗口没开时（后台更新）带 --background，不弹窗口。
-    static func relaunchAfterExit(background: Bool) {
+    /// 旧进程退出以后再打开 `url` 那一份（默认是「应用程序」里的），避免同一个 bundle id 只激活旧进程。
+    /// `background` 为 true 时带 --background，不弹窗口。
+    static func relaunchAfterExit(background: Bool, at url: URL = applicationsURL) {
         let script = """
         i=0
         while /bin/kill -0 "$0" 2>/dev/null && [ "$i" -lt 150 ]; do /bin/sleep 0.1; i=$((i + 1)); done
@@ -167,7 +168,7 @@ enum Installation {
         """
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/sh")
-        process.arguments = ["-c", script, "\(ProcessInfo.processInfo.processIdentifier)", applicationsURL.path, background ? "background" : "window"]
+        process.arguments = ["-c", script, "\(ProcessInfo.processInfo.processIdentifier)", url.path, background ? "background" : "window"]
         try? process.run()
     }
 

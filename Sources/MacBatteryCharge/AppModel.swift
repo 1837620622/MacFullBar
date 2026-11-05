@@ -141,6 +141,20 @@ final class AppModel: ObservableObject {
             journalPrevious = history.samples.last
         }
         recompute()
+        noteUpdateIfAny(usedBefore: loaded.guideSeen)
+    }
+
+    private static let lastRunVersionKey = "lastRunVersion"
+
+    /// 装完新版本、自己重新打开以后，窗口顶上说一句「已经更新到 x.y.z」，让你知道换好了。只说一次。
+    private func noteUpdateIfAny(usedBefore: Bool) {
+        guard !preview, Installation.isBundle else { return }
+        let defaults = UserDefaults.standard
+        let current = Installation.version
+        if AppVersion.justUpdated(from: defaults.string(forKey: Self.lastRunVersionKey), to: current, usedBefore: usedBefore) {
+            message = Message(tone: .success, text: T("已经更新到 %@。", ["\(current)"]))
+        }
+        defaults.set(current, forKey: Self.lastRunVersionKey)
     }
 
     // MARK: 读数
@@ -907,11 +921,9 @@ final class AppModel: ObservableObject {
         }
         let fingerprint: String? = newer == nil ? nil : Installation.installedFingerprint()
         guard installWatch.observe(fingerprint), let version = newer else { return }
-        // 窗口开着，或者你正在看这个更新，就带着窗口打开；否则在后台悄悄地打开。
-        var showWindow = windowVisible
-        if case .available = update { showWindow = true }
+        // 你刚装完新版本，人就在电脑前：带着窗口打开，顶上会说「已经更新到」，一眼看得到换好了。
         update = .relaunching(version)
-        Installation.relaunchAfterExit(background: !showWindow)
+        Installation.relaunchAfterExit(background: false)
         NSApp.terminate(nil)
     }
 
@@ -934,6 +946,25 @@ final class AppModel: ObservableObject {
 
     func replayGuide() {
         showGuide = true
+    }
+
+    // MARK: 重新打开和退出
+
+    /// 从 .app 里跑才能重新打开；命令行直接跑的二进制没有可以 open 的东西，只能退出。
+    var canRestart: Bool { !preview && Installation.isBundle }
+
+    /// 重新打开：先存好设置，退出以后再把同一份打开（从哪里打开的就打开哪一份），带着窗口。
+    func restartApp() {
+        guard canRestart else { return }
+        saveNow()
+        Installation.relaunchAfterExit(background: false, at: Installation.bundleURL)
+        NSApp.terminate(nil)
+    }
+
+    /// 退出：和菜单里的「退出」一样，退出前把电源接回来、把记录写下来。
+    func quitApp() {
+        guard !preview else { return }
+        NSApp.terminate(nil)
     }
 
     // MARK: 安装位置和卸载
