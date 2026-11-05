@@ -81,6 +81,20 @@ struct RootView: View {
             if let error = model.scheduleError {
                 MessageLine(message: AppModel.Message(tone: .error, text: error.message))
             }
+            // 这台的上限谁都管不了时直说，不能装作在护电池。
+            if model.limitUnenforceable {
+                MessageLine(message: AppModel.Message(tone: .error, text: T("这台 Mac 的充电上限现在没人能管：系统不让改，放电帮手也碰不了这一代固件。电池会照常充满。")))
+            } else if model.limitNeedsHelper {
+                MessageLine(message: AppModel.Message(tone: .error, text: T("这台 Mac 的系统不能设充电上限，现在电池会照常充满。装上放电帮手后，由它来停充。")),
+                            action: model.helperInstallable ? (title: T("安装放电帮手"), run: { model.installHelper() }) : nil)
+                    .disabled(model.helperBusy)
+            }
+            // 不在「应用程序」里跑的时候，登录时打开和装完新版本后自己重新打开都用不了。
+            if model.offerMove {
+                MessageLine(message: AppModel.Message(tone: .info, text: T("现在不是从「应用程序」里打开的。放进去以后，登录时才会自己打开。")),
+                            action: (title: T("放进“应用程序”"), run: { model.moveToApplications() }))
+                    .disabled(model.moving)
+            }
             // 读数里要你留意的：充电器跟不上、充得慢、高于上限只停充。条件没了自己消失。
             ForEach(model.notices) { notice in
                 MessageLine(message: AppModel.Message(tone: notice.tone == .warn ? .error : .info, text: notice.text),
@@ -305,12 +319,16 @@ struct MessageLine: View {
     var message: AppModel.Message
     /// 不给就按语气选一个。
     var symbol: String? = nil
+    /// 文字下面的一个按钮：标题和要做的事。
+    var action: (title: String, run: () -> Void)? = nil
     /// 有「关掉」动作才显示 ×。
     var dismiss: (() -> Void)? = nil
 
-    init(message: AppModel.Message, symbol: String? = nil, dismiss: (() -> Void)? = nil) {
+    init(message: AppModel.Message, symbol: String? = nil, action: (title: String, run: () -> Void)? = nil,
+         dismiss: (() -> Void)? = nil) {
         self.message = message
         self.symbol = symbol
+        self.action = action
         self.dismiss = dismiss
     }
 
@@ -318,9 +336,15 @@ struct MessageLine: View {
         HStack(alignment: .top, spacing: 8) {
             Image(systemName: symbol ?? toneSymbol)
                 .foregroundStyle(tint)
-            Text(message.text)
-                .font(.callout)
-                .fixedSize(horizontal: false, vertical: true)
+            VStack(alignment: .leading, spacing: 6) {
+                Text(message.text)
+                    .font(.callout)
+                    .fixedSize(horizontal: false, vertical: true)
+                if let action {
+                    Button(action.title, action: action.run)
+                        .controlSize(.small)
+                }
+            }
             Spacer(minLength: 0)
             if let dismiss {
                 Button(action: dismiss) {

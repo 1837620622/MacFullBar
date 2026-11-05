@@ -493,6 +493,15 @@ final class AppModel: ObservableObject {
         return helper.chargeControl == .system || helper.chargeControl == .none
     }
 
+    /// 系统在这台 Mac 上设不了充电上限，又没装帮手：上限现在没在生效，要说清楚、给一个装帮手的按钮。
+    var limitNeedsHelper: Bool {
+        guard !preview, battery.present, helper == nil, case .unsupported = reading?.chargeLimit else { return false }
+        return true
+    }
+
+    /// 不在「应用程序」里跑（比如直接从磁盘映像打开）：给一个「放进应用程序」的按钮。
+    var offerMove: Bool { !preview && Installation.shouldOfferMove }
+
     /// 今天不放电：只管当天，过了午夜自动恢复。
     var dischargeOffToday: Bool { settings.dischargeOffDay == Self.dayKey(Date()) }
 

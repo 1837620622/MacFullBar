@@ -16,12 +16,13 @@ struct GuideView: View {
     var body: some View {
         VStack(spacing: 0) {
             topBar
-            // 放得下就上下居中；字放大了、或者英文太长放不下，才滚动。
+            // 放得下就放在偏上一点的中间（上面一份空、下面两份空，看起来才是正中）；字放大了、或者英文太长放不下，才滚动。
             ViewThatFits(in: .vertical) {
                 VStack(spacing: 0) {
                     Spacer(minLength: 16)
                     pageContent
-                    Spacer(minLength: 16)
+                    Spacer(minLength: 8)
+                    Spacer(minLength: 8)
                 }
                 ScrollView {
                     pageContent
@@ -72,8 +73,27 @@ struct GuideView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    /// 页面的图标：圆角方块里一个白色符号，底色是强调色的渐变。
-    private var hero: some View {
+    /// 页面的图标。第一页用主窗口里那只会动的电池，停在 80%，一眼就知道它管什么；
+    /// 其余几页是圆角方块里一个白色符号，底色是强调色的渐变。
+    @ViewBuilder private var hero: some View {
+        if page == 0 {
+            ZStack {
+                LiquidDisc(level: 0.8, limit: 80, tint: .accentColor, flow: .plugged, live: model.liveMotion)
+                    .frame(width: 104, height: 104)
+                    .clipShape(Circle())
+                    .overlay(Circle().stroke(Color.primary.opacity(0.12), lineWidth: 1))
+                Text("80%")
+                    .font(.system(size: 28, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.white)
+                    .shadow(color: .black.opacity(0.18), radius: 1, y: 0.5)
+            }
+            .accessibilityHidden(true)
+        } else {
+            symbolHero
+        }
+    }
+
+    private var symbolHero: some View {
         Image(systemName: Self.symbols[min(page, Self.symbols.count - 1)])
             .font(.system(size: 28, weight: .medium))
             .foregroundStyle(.white)

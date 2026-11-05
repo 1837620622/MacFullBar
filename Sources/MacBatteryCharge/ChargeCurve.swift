@@ -70,7 +70,7 @@ struct ChargeCurve: View {
             }
             last = sample.t
         }
-        let fade = Gradient(colors: [Color.accentColor.opacity(0.22), Color.accentColor.opacity(0)])
+        let fade = Gradient(colors: [Color.accentColor.opacity(0.18), Color.accentColor.opacity(0)])
         var past = Path()
         for points in segments {
             guard let first = points.first, let end = points.last else { continue }
