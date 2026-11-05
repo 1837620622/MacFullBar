@@ -56,4 +56,14 @@ OWNER="$(/usr/bin/stat -f%Su /dev/console 2>/dev/null)"
 if [ -d "$APP" ] && [ -n "$OWNER" ] && [ "$OWNER" != "root" ]; then
     /usr/sbin/chown -R "$OWNER" "$APP" 2>/dev/null
 fi
+
+# 装完就打开，用登录着的那个用户的身份（不能用 root 打开）。
+# 旧版本还开着的话不在这里动它：它会发现「应用程序」里换成了新版本，十几秒内自己退出、带着窗口打开新的，
+# 退出前还会把放电帮手断开的电源接回来。这里只管「没在运行」的情况。
+CONSOLE_UID="$(/usr/bin/stat -f%u /dev/console 2>/dev/null)"
+if [ -d "$APP" ] && [ -n "$OWNER" ] && [ "$OWNER" != "root" ] && [ -n "$CONSOLE_UID" ] && [ "$CONSOLE_UID" != "0" ]; then
+    if ! /usr/bin/pgrep -x MacBatteryCharge >/dev/null 2>&1; then
+        /bin/launchctl asuser "$CONSOLE_UID" /usr/bin/sudo -u "$OWNER" /usr/bin/open "$APP" >/dev/null 2>&1 || true
+    fi
+fi
 exit 0

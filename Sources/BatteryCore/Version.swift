@@ -26,6 +26,13 @@ public struct AppVersion: Comparable, Sendable {
         guard let a = AppVersion(candidate), let b = AppVersion(current) else { return false }
         return b < a
     }
+
+    /// 这次启动是不是刚更新完。`previous` 是上次跑的版本；以前的版本没记过这个，
+    /// 那时用 `usedBefore`（看过引导，说明不是新装）来判断。降级、同一版本重开都不算。
+    public static func justUpdated(from previous: String?, to current: String, usedBefore: Bool) -> Bool {
+        guard let previous else { return usedBefore && AppVersion(current) != nil }
+        return isNewer(current, than: previous)
+    }
 }
 
 public struct ReleaseAsset: Equatable, Sendable {

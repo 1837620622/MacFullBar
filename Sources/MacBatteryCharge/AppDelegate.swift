@@ -140,6 +140,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
 
     private func showMenu(from button: NSStatusBarButton) {
         let menu = NSMenu()
+        // 自己决定哪几项能点（比如一直充满时没有临时充满）。默认 NSMenu 会把有响应的项全部点亮，下面的 isEnabled 就不管用了。
+        menu.autoenablesItems = false
         let battery = model.battery
         let header = NSMenuItem(title: battery.percent.map { T("电量 %@% · %@", ["\($0)", "\(model.limitLine)"]) } ?? model.limitLine, action: nil, keyEquivalent: "")
         header.isEnabled = false
@@ -153,12 +155,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         apply.target = self
         menu.addItem(.separator())
         menu.addItem(withTitle: T("关于充电上限"), action: #selector(showAbout), keyEquivalent: "").target = self
+        let restart = menu.addItem(withTitle: T("重新打开充电上限"), action: #selector(restartApp), keyEquivalent: "")
+        restart.target = self
+        restart.isEnabled = model.canRestart
         menu.addItem(withTitle: T("退出充电上限"), action: #selector(quitApp), keyEquivalent: "q").target = self
         menu.popUp(positioning: nil, at: NSPoint(x: 0, y: button.bounds.height + 4), in: button)
     }
 
     @objc private func openFromMenu() { showPopover() }
-    @objc private func quitApp() { NSApp.terminate(nil) }
+    @objc private func quitApp() { model.quitApp() }
+    @objc private func restartApp() { model.restartApp() }
     @objc private func toggleTopUp() { model.toggleTopUp() }
     @objc private func applyFromMenu() { model.applyNow() }
 

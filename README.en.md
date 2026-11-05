@@ -28,7 +28,7 @@ The app isn't notarized by Apple, so macOS will block it the first time you open
 
 ## What it looks like
 
-It sits in the menu bar as a small battery with the current percentage next to it. Click it and a window drops down. Top left is the charge level, and next to it is what the app is doing right now, for example "Holding steady, running from power". Under that is a row with battery health, cycle count and temperature; any of them turns orange when it's worth a look. Further down you'll see tonight's plan (when you usually unplug and roughly when it'll be full) and a chart of the last 16 hours.
+It sits in the menu bar as a small battery with the current percentage next to it. Click it and a window drops down. Top left is the charge level, and next to it is what the app is doing right now, for example "Holding steady, running from power". Under that is a row with battery health, cycle count and temperature; any of them turns orange when it's worth a look. Further down you'll see tonight's plan (when you usually unplug and roughly when it'll be full) and a chart of the last 16 hours. The gear in the top-right corner opens Settings, and the power button next to it restarts or quits the app.
 
 The middle of the window is where you pick one of three modes.
 
@@ -66,9 +66,9 @@ Install it from Settings → Advanced. macOS asks for your administrator passwor
 
 ## Updates
 
-About every six hours the app checks whether there's a new version (you can turn this off in Settings). When there is one, a banner appears at the top of the window. "Download New Version" opens the installer for your chip in your browser, and you install it yourself. Once it's installed, the copy that's running reopens itself within about fifteen seconds, with your settings and history intact.
+About every six hours the app checks whether there's a new version (you can turn this off in Settings). When there is one, a banner appears at the top of the window. "Download New Version" opens the installer for your chip in your browser, and you install it yourself. The PKG opens the app when it's done. If the old version is still running, it quits within about fifteen seconds and reopens the new one with its window showing and an "Updated to" note at the top. Your settings and history stay.
 
-If you install over the old version with the DMG, the discharge helper stays on the old version, so reinstall it in Settings → Advanced. The PKG replaces it for you.
+If you install over the old version with the DMG, the discharge helper stays on the old version. The window tells you, and one click on "Install discharge helper" fixes it. The PKG replaces it for you.
 
 ## Privacy
 
@@ -85,7 +85,7 @@ Settings and history live in `~/Library/Application Support/MacBatteryCharge`. "
 
 ## Uninstall
 
-If you installed the discharge helper, remove it first in Settings → Advanced. Then turn off "Open at login", quit the app, and drag Charge Limit from Applications to the Trash. To delete its records too, remove `~/Library/Application Support/MacBatteryCharge`. The system charge limit stays at the last value the app set; if System Settings has a charge limit option on your Mac, you can set it back to 100% there.
+If you installed the discharge helper, remove it first in Settings → Advanced. Then turn off "Open at login", choose "Quit Charge Limit" from the power button in the top-right corner, and drag Charge Limit from Applications to the Trash. To delete its records too, remove `~/Library/Application Support/MacBatteryCharge`. The system charge limit stays at the last value the app set; if System Settings has a charge limit option on your Mac, you can set it back to 100% there.
 
 ## Building
 
