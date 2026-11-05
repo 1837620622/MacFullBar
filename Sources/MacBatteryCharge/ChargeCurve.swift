@@ -19,7 +19,7 @@ struct ChargeCurve: View {
     /// 底下留给时间标签的高度。
     private static let labelHeight: CGFloat = 16
     /// 右边留给刻度的宽度。线都画在它左边，刻度字不会被预测的虚线穿过去。
-    private static let axisWidth: CGFloat = 30
+    private static let axisWidth: CGFloat = 36
     /// 上面留一点：100% 的刻度字以那条线为中心，不会被切掉一半。
     private static let topInset: CGFloat = 6
 
