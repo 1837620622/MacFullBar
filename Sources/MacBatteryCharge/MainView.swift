@@ -168,8 +168,9 @@ struct RootView: View {
                 statRow
                     .padding(.top, 4)
             }
-            Spacer(minLength: 0)
-            HStack(spacing: 12) {
+            // 文字这一栏占满中间，不再用 Spacer：Spacer 两边各吃一份间距，右上角多了按钮以后，温度那一格会被挤成两行。
+            .frame(maxWidth: .infinity, alignment: .leading)
+            HStack(spacing: 10) {
                 // 重新打开、退出：以前只有右键菜单栏图标才找得到。
                 Menu {
                     Button(T("重新打开充电上限")) { model.restartApp() }
@@ -219,7 +220,9 @@ struct RootView: View {
                     Text(stat.value)
                         .font(.caption.weight(.medium))
                         .monospacedDigit()
+                        .lineLimit(1)
                 }
+                .fixedSize()
                 .foregroundStyle(stat.warn ? Color.orange : Color.secondary)
                 .padding(.horizontal, 7)
                 .padding(.vertical, 3)
